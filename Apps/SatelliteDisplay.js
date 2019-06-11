@@ -40,8 +40,8 @@ viewTimelineEnabled = false;
 
 //Enable terrain
 var terrainProvider = new Cesium.CesiumTerrainProvider({
-    url: '//assets.agi.com/stk-terrain/world',
-    requestWaterMask: true
+    url: Cesium.IonResource.fromAssetId(3956),
+    requestVertexNormals : true
 });
 
 viewer.camera.flyTo({
