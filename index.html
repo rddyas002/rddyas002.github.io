@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Spaceteq Satellite Visualiser</title>
-  <script src="Cesium/Cesium.js"></script>
-  <style>
-      @import url(Cesium/Widgets/widgets.css);
-      html, body, #cesiumContainer {
-          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-      }
-  </style>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>Spaceteq Satellite Visualiser</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="Apps/CesiumViewer.css" media="screen">
+	<script src="Cesium/Cesium.js"></script>
 </head>
-<body>
-  <div id="cesiumContainer"></div>
-  <script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
-  <script src="Apps/SatelliteDisplay.js"></script>
+<body style="background: #000;">
+    <div id="cesiumContainer" class="fullWindow"></div>
+	<script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/3.0.1/satellite.min.js"></script>	
+	<script src="Apps/SatelliteDisplay.js"></script>
 </body>
 </html>
