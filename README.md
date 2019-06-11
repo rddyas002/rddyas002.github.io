@@ -1,2 +1,2 @@
-# rddyas002.spaceteq.io
-SpaceTeq Cesium Test
+# rddyas002.github.io
+SpaceTeq Satellite Visualiser
