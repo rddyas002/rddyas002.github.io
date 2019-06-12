@@ -1,0 +1,22 @@
+{
+  "name": "CubeSatViewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.7.4",
+    "express": "^4.17.1",
+    "fs": "0.0.1-security",
+    "request": "^2.88.0",
+    "spacetrack": "^2.1.1",
+    "url": "^0.11.0",
+    "websocket": "^1.0.28",
+    "yargs": "^13.2.4"
+  }
+}
