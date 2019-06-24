@@ -54,11 +54,11 @@ function createEntity(count,name,tle1,tle2){
 	var satellites = viewer.entities.add({
 		id: name,
 		name: name,
-		//model: {
-		//	uri: 'CubeSpaceDemo/models/3U_4_low.gltf',
-		//	minimumPixelSize: 0.0,
-		//	show: true
-		//},
+		model: {
+			uri: 'Apps/models/EOSat1_SD/EOSat1_SD.gltf',
+			minimumPixelSize: 0.0,
+			show: true
+		},
 		point: {
 			color: Cesium.Color.RED,
 			pixelSize: 5,
@@ -70,19 +70,19 @@ function createEntity(count,name,tle1,tle2){
 	
 	sampledPosition[count] = new Cesium.SampledPositionProperty(Cesium.ReferenceFrame.INERTIAL, 0);
 	sampledPosition[count].setInterpolationOptions({
-		interpolationDegree: 5,
+		interpolationDegree: 3,
 		interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
 	});
-	sampledPosition[count].forwardExtrapolationDuration = 5;
+	sampledPosition[count].forwardExtrapolationDuration = 10;
 	satellites.position = sampledPosition[count];
 	
 	// create orientation property
 	sampledOrientation[count] = new Cesium.SampledProperty(Cesium.Quaternion);
 	sampledOrientation[count].setInterpolationOptions({
-		interpolationDegree: 5,
+		interpolationDegree: 10,
 		interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
 	});
-	sampledOrientation[count].forwardExtrapolationDuration = 5;
+	sampledOrientation[count].forwardExtrapolationDuration = 10;
 	satellites.orientation = sampledOrientation[count];
 }
 
@@ -116,6 +116,28 @@ var g_pitch = 0;
 var g_roll = 0;
 var g_yaw = 0;
 
+function computeNadir_q_ecef(cesium_time, pos, vel){
+	var Teme2Fixed = Cesium.Transforms.computeTemeToPseudoFixedMatrix(cesium_time, new Cesium.Matrix3());
+	
+	var nadir = Cesium.Cartesian3.negate(pos, new Cesium.Cartesian3());
+	var n_z = Cesium.Cartesian3.normalize(nadir, new Cesium.Cartesian3());	// new z
+	var n_x = Cesium.Cartesian3.normalize(vel, new Cesium.Cartesian3());	// new x
+	var n_y = Cesium.Cartesian3.cross(n_z, n_x, new Cesium.Cartesian3());	// new y
+	Cesium.Cartesian3.normalize(n_y, n_y);
+	var n_x2 = Cesium.Cartesian3.cross(n_y, n_z, new Cesium.Cartesian3());	// new x
+	// transform to ecef
+	var n_x_ecef = Cesium.Matrix3.multiplyByVector(Teme2Fixed, n_x2, new Cesium.Cartesian3());
+	var n_y_ecef = Cesium.Matrix3.multiplyByVector(Teme2Fixed, n_y, new Cesium.Cartesian3());
+	var n_z_ecef = Cesium.Matrix3.multiplyByVector(Teme2Fixed, n_z, new Cesium.Cartesian3());
+		
+	var model = new Cesium.Matrix3(n_x_ecef.x, n_y_ecef.x, n_z_ecef.x, n_x_ecef.y, n_y_ecef.y, n_z_ecef.y, n_x_ecef.z, n_y_ecef.z, n_z_ecef.z);	// ecef to body
+	var offset = Cesium.Matrix3.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(0, 0, 0), new Cesium.Matrix3());
+	var out = Cesium.Matrix3.multiply(model, offset, new Cesium.Matrix3());
+	
+	return Cesium.Quaternion.fromRotationMatrix(out, new Cesium.Quaternion());
+}
+
+var y_thompson = false;
 function sgp4_propagate(){
 	js_time = new Date();
 	var jd_time = Cesium.JulianDate.fromDate(js_time);
@@ -124,16 +146,27 @@ function sgp4_propagate(){
 		sat_position = new Cesium.Cartesian3(positionAndVelocity.position.x*1e3, positionAndVelocity.position.y*1e3, positionAndVelocity.position.z*1e3);
 		sat_velocity = new Cesium.Cartesian3(positionAndVelocity.velocity.x, positionAndVelocity.velocity.y, positionAndVelocity.velocity.z);
 		sampledPosition[i].addSample(jd_time, sat_position);
+		
+		var q_nadir = computeNadir_q_ecef(jd_time, sat_position, sat_velocity);	
 
-		//g_yaw = g_yaw + 0.0; 
-		//g_pitch = g_pitch - 0.1; 
-		//g_roll = 0;
-		hpr = new Cesium.HeadingPitchRoll(g_yaw, g_pitch, g_roll);
-		qc = new Cesium.Quaternion.fromHeadingPitchRoll(hpr);
-		sampledOrientation[i].addSample(jd_time, qc);	
+		if (y_thompson){
+			g_yaw = g_yaw + 0.0; 
+			g_pitch = g_pitch + 1*Cesium.Math.PI/180; 
+			g_roll = 0;			
+		}
+		else{
+			g_yaw = 0.0; 
+			g_pitch = 0; 
+			g_roll = 0;			
+		}
+
+		var q_hpr = Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(g_yaw, g_pitch, g_roll), new Cesium.Quaternion);
+		var q_curr = Cesium.Quaternion.multiply(q_nadir, q_hpr, new Cesium.Quaternion);
+
+		sampledOrientation[i].addSample(jd_time, q_curr);	
 	}
 	start_counter++;
-	if (start_counter > 2 && start_counter < 5){
+	if (start_counter > 4 && start_counter < 6){
 		clock_1._shouldAnimate = true;
 		console.log('Visualiser is live now.')
 	}
@@ -151,6 +184,16 @@ Mousetrap.bind('t', function (e) {
         viewer.animation.container.hidden = false
 		//viewer.timeline.container.hidden = false
         viewTimelineEnabled = true;
+    }
+});
+
+// toggle y thompson and nadir
+Mousetrap.bind('y', function (e) {
+    if (y_thompson) {
+        y_thompson = false;
+    }
+    else {
+        y_thompson = true;
     }
 });
 // home view
