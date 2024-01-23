@@ -31,21 +31,21 @@
         }
     });
     var argv = yargs.argv;
-	
+
 	// get latest TLEs
 	var latest_tle;
 	var spacetrack = require('spacetrack');
 		spacetrack.login({
-			username: 'yreddi@spaceteq.co.za',
-			password: 'Yaqeen17032018!'
+			username: 'yashrenreddi@dragonflyaerospace.com',
+			password: 'Dfa2023EoSSat1!'
 	});
-	
+
 	function update_tles(){
 		console.log('Requesting TLEs from SpaceTrack');
 		spacetrack.get({
 		  type: 'tle_latest',
 		  query: [
-			{field:'NORAD_CAT_ID', condition: '35870,39417,43907'},
+			{field:'NORAD_CAT_ID', condition: '55053'},//,35870,39417,43907'},
 			{field:'ORDINAL', condition: '1'},
 		  ]
 		})
@@ -54,12 +54,12 @@
 			latest_tle = result;
 			}, function(err) {
 			console.error('error', err.stack);
-		});		
-	}	
+		});
+	}
 	update_tles();
 	// update tles every 1 hour
 	setInterval(update_tles, 3600000);
-	
+
     if (argv.help) {
         return yargs.showHelp();
     }
@@ -194,7 +194,7 @@
             console.log('Cesium development server running locally.  Connect to http://localhost:%d/', server.address().port);
         }
     });
-	
+
 	// Handle POST request
 	app.post('/tle', function(req, res, next) {
 		console.log(req);
